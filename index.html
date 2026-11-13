@@ -1,0 +1,2015 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Retro Mobile Challenge 2026 • Academia de Game Designers</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg-deep: #100d25;
+      --bg-card: #1b1636;
+      --bg-elevated: #261f4a;
+      --cyan: #68f9e6;
+      --lime: #c0ff79;
+      --pink: #ff87ce;
+      --gold: #ffd43b;
+      --border: #4d3f72;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      background: radial-gradient(circle at 85% 10%, #381e54 0%, transparent 45%),
+                  radial-gradient(circle at 15% 85%, #19294d 0%, transparent 45%),
+                  var(--bg-deep);
+      color: #f6f1ff;
+      font-family: 'Inter', system-ui, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .font-pixel {
+      font-family: 'Press Start 2P', monospace;
+    }
+
+    .font-mono-tech {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Pixel-art Canvas Styling */
+    canvas {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Custom Arcade Shadows & Buttons */
+    .btn-arcade {
+      transition: transform 0.08s ease, filter 0.15s ease, box-shadow 0.08s ease;
+    }
+    .btn-arcade:active:not(:disabled) {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.5) !important;
+    }
+
+    /* Duolingo-style Trail Node Pulse */
+    @keyframes pulseRing {
+      0% { transform: scale(0.95); opacity: 0.85; }
+      70% { transform: scale(1.22); opacity: 0; }
+      100% { transform: scale(1.22); opacity: 0; }
+    }
+    .node-pulse::before {
+      content: '';
+      position: absolute;
+      inset: -6px;
+      border-radius: 9999px;
+      border: 3px solid var(--cyan);
+      animation: pulseRing 2s infinite;
+      pointer-events: none;
+    }
+
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-5px); }
+    }
+    .float-slow {
+      animation: floatSlow 2.6s ease-in-out infinite;
+    }
+
+    /* Modal Backdrop Blur */
+    .modal-backdrop {
+      background: rgba(10, 8, 24, 0.86);
+      backdrop-filter: blur(6px);
+    }
+
+    /* Print Styles (Preserving Pedagogical Report) */
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #111111 !important;
+        font-size: 11pt;
+      }
+      header, footer, #screen-intro, #screen-trail, #screen-play, #quiz-modal, #confirm-modal, .no-print {
+        display: none !important;
+      }
+      #screen-result {
+        display: block !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .print-card {
+        background: #ffffff !important;
+        color: #111111 !important;
+        border: 1px solid #999999 !important;
+        box-shadow: none !important;
+      }
+      .print-text-dark {
+        color: #111111 !important;
+      }
+      .review-item {
+        break-inside: avoid;
+        border-bottom: 1px solid #bbbbbb !important;
+        padding: 12px 0 !important;
+      }
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen selection:bg-[#68f9e6] selection:text-[#100d25]">
+
+  <!-- TOP HUD BAR -->
+  <header class="sticky top-0 z-30 border-b border-[#4d3f72]/70 bg-[#100d25]/90 backdrop-blur-md">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-[#261f4a] border border-[#68f9e6]/60 flex items-center justify-center text-lg shadow-[0_0_12px_rgba(104,249,230,0.25)]">
+          🎮
+        </div>
+        <div>
+          <div class="font-mono-tech text-[11px] font-bold tracking-widest text-[#68f9e6] uppercase">
+            Retro Mobile Challenge 2026
+          </div>
+          <div class="text-xs sm:text-sm font-bold text-white leading-tight">
+            Academia de Game Designers <span class="text-[#ff87ce] font-mono-tech">• Aula 13</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- HUD Stats (Visible after start) -->
+      <div id="hud-stats" class="hidden items-center gap-2 sm:gap-4">
+        <!-- Hearts -->
+        <div id="hud-hearts" class="flex items-center gap-1 bg-[#1b1636] border border-[#4d3f72] px-2.5 py-1.5 rounded-xl" title="Vidas restantes">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- XP Counter -->
+        <div class="flex items-center gap-1.5 bg-[#1b1636] border border-[#4d3f72] px-3 py-1.5 rounded-xl">
+          <span class="text-sm">⚡</span>
+          <span id="hud-xp" class="font-mono-tech text-xs sm:text-sm font-extrabold text-[#c0ff79]">0 XP</span>
+        </div>
+
+        <!-- Sound Toggle -->
+        <button id="btn-sound" type="button" aria-label="Alternar som"
+          class="p-2 rounded-xl bg-[#1b1636] border border-[#4d3f72] hover:border-[#68f9e6] text-base transition">
+          🔊
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 w-full max-w-5xl mx-auto px-4 py-6 sm:py-8">
+
+    <!-- =========================================================
+         SCREEN 1: INTRO / START SCREEN (Inspired by Screenshot + Original)
+    ========================================================== -->
+    <section id="screen-intro" class="max-w-3xl mx-auto">
+      <div class="text-center mb-6">
+        <p class="font-mono-tech text-xs sm:text-sm font-bold tracking-[0.2em] text-[#68f9e6] uppercase mb-2">
+          AULA 13 • MISSÃO 06
+        </p>
+        <h1 class="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-[#ffd43b] drop-shadow-[0_3px_0_rgba(105,68,135,0.9)]">
+          ACADEMIA DE GAME DESIGNERS
+        </h1>
+        <p class="mt-2 text-sm sm:text-base font-mono-tech font-bold tracking-wider text-[#ff87ce] uppercase">
+          MECÂNICAS E REGRAS
+        </p>
+      </div>
+
+      <!-- Live Animated Pixel-Art Banner Canvas -->
+      <div class="relative rounded-2xl overflow-hidden border-2 border-[#68f9e6]/70 shadow-[0_12px_40px_rgba(0,0,0,0.65)] bg-[#1572c6] aspect-[16/9] max-h-[340px] mx-auto mb-6">
+        <canvas id="preview-canvas"></canvas>
+        <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none">
+          <span class="bg-[#100d25]/85 backdrop-blur-sm border border-[#68f9e6]/50 text-[#68f9e6] font-mono-tech text-[11px] px-2.5 py-1 rounded-lg">
+            🕹️ MODO PLATAFORMA + TRILHA INTERATIVA
+          </span>
+          <span class="hidden sm:inline-block bg-[#100d25]/85 backdrop-blur-sm border border-[#c0ff79]/50 text-[#c0ff79] font-mono-tech text-[11px] px-2.5 py-1 rounded-lg">
+            12 DESAFIOS • ATÉ 1.200 XP
+          </span>
+        </div>
+      </div>
+
+      <div class="text-center mb-6">
+        <h2 class="text-xl sm:text-2xl font-extrabold text-[#ffd43b]">Sua jornada começa agora!</h2>
+        <p class="text-sm sm:text-base text-[#c8bfdc] mt-1 max-w-xl mx-auto">
+          Explore as fases em pixel-art, colete moedas, enfrente guardiões e abra os baús respondendo aos desafios de Game Design!
+        </p>
+      </div>
+
+      <!-- 3 Summary Boxes (Matching user screenshot layout) -->
+      <div class="grid grid-cols-3 gap-3 sm:gap-4 mb-6">
+        <div class="bg-[#1b1636]/90 border border-[#4d3f72] rounded-2xl p-3 sm:p-4 text-center">
+          <div class="font-mono-tech text-2xl sm:text-3xl font-extrabold text-[#c0ff79]">6</div>
+          <div class="text-xs sm:text-sm text-[#c8bfdc] mt-0.5">Fases na Trilha</div>
+        </div>
+        <div class="bg-[#1b1636]/90 border border-[#4d3f72] rounded-2xl p-3 sm:p-4 text-center">
+          <div class="font-mono-tech text-2xl sm:text-3xl font-extrabold text-[#68f9e6]">12</div>
+          <div class="text-xs sm:text-sm text-[#c8bfdc] mt-0.5">Baús & Desafios</div>
+        </div>
+        <div class="bg-[#1b1636]/90 border border-[#4d3f72] rounded-2xl p-3 sm:p-4 text-center">
+          <div class="font-mono-tech text-2xl sm:text-3xl font-extrabold text-[#ffd43b]">1.200</div>
+          <div class="text-xs sm:text-sm text-[#c8bfdc] mt-0.5">XP Máximo</div>
+        </div>
+      </div>
+
+      <!-- Student Form -->
+      <form id="form-start" class="bg-[#1b1636] border border-[#4d3f72] rounded-2xl p-5 sm:p-6 shadow-xl">
+        <label for="input-student" class="block text-sm font-bold text-white mb-2">
+          Nome do jogador(a) / aluno(a)
+        </label>
+        <input
+          id="input-student"
+          type="text"
+          required
+          maxlength="100"
+          autocomplete="name"
+          placeholder="Digite seu nome para registrar no relatório..."
+          class="w-full px-4 py-3.5 rounded-xl bg-[#100d25] border-2 border-[#4d3f72] text-white placeholder-[#7f739e] focus:outline-none focus:border-[#68f9e6] transition"
+        />
+        <p id="start-error" class="hidden text-xs text-[#ff87ce] font-semibold mt-2">
+          Por favor, digite seu nome para iniciar a missão.
+        </p>
+
+        <div class="mt-5 flex flex-col sm:flex-row gap-3">
+          <button type="submit"
+            class="btn-arcade flex-1 py-4 px-6 rounded-xl bg-[#c0ff79] text-[#102110] font-extrabold text-base sm:text-lg shadow-[0_5px_0_#588536] hover:brightness-105 flex items-center justify-center gap-2 cursor-pointer">
+            <span>🎮 INICIAR MISSÃO</span>
+          </button>
+        </div>
+        <p class="text-xs text-[#a599c2] text-center mt-3">
+          Cada desafio vale <strong>100 XP</strong> + moedas bônus de exploração. Errar também faz parte da aprendizagem!
+        </p>
+      </form>
+    </section>
+
+    <!-- =========================================================
+         SCREEN 2: DUOLINGO-STYLE LEARNING TRAIL MAP
+    ========================================================== -->
+    <section id="screen-trail" class="hidden max-w-2xl mx-auto">
+      <!-- Trail Header Card -->
+      <div class="bg-[#1b1636] border border-[#4d3f72] rounded-2xl p-4 sm:p-5 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
+        <div>
+          <span class="font-mono-tech text-xs text-[#ff87ce] uppercase tracking-wider font-bold">Trilha de Aprendizagem</span>
+          <h2 class="text-lg sm:text-xl font-extrabold text-white mt-0.5">
+            Olá, <span id="trail-student-name" class="text-[#68f9e6]">Jogador</span>!
+          </h2>
+          <p class="text-xs sm:text-sm text-[#c8bfdc] mt-0.5">
+            Selecione a fase liberada abaixo para entrar no mundo pixel-art e abrir os baús de desafio.
+          </p>
+        </div>
+        <div class="flex items-center gap-3 self-start sm:self-center">
+          <div class="text-right">
+            <div class="text-[11px] font-mono-tech text-[#a599c2]">PROGRESSO</div>
+            <div id="trail-progress-text" class="font-mono-tech text-base font-extrabold text-[#c0ff79]">0 / 12 Desafios</div>
+          </div>
+          <button id="btn-finish-early" type="button" class="hidden btn-arcade px-3.5 py-2 rounded-xl bg-[#ffd43b] text-[#1f1800] font-bold text-xs shadow-[0_3px_0_#9e7d0e]">
+            Ver Relatório 🏆
+          </button>
+        </div>
+      </div>
+
+      <!-- Sinuous Duolingo-like Path -->
+      <div class="relative py-4 px-2">
+        <div id="trail-nodes" class="flex flex-col items-center gap-7 relative z-10">
+          <!-- Dynamically rendered 6 phase nodes -->
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         SCREEN 3: PLAYABLE PIXEL-ART PLATFORMER STAGE
+    ========================================================== -->
+    <section id="screen-play" class="hidden max-w-4xl mx-auto">
+      <!-- Stage Top Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3 bg-[#1b1636] border border-[#4d3f72] rounded-2xl px-4 py-3">
+        <div class="flex items-center gap-3">
+          <button id="btn-back-trail" type="button"
+            class="btn-arcade px-3 py-1.5 rounded-xl bg-[#261f4a] border border-[#65567d] hover:border-[#68f9e6] text-xs font-bold text-white flex items-center gap-1.5">
+            <span>← Trilha</span>
+          </button>
+          <div>
+            <div id="stage-badge" class="font-mono-tech text-[11px] font-bold text-[#ff87ce] uppercase">FASE 1 DE 6</div>
+            <h2 id="stage-title" class="text-base sm:text-lg font-extrabold text-white leading-tight">Mecânicas</h2>
+          </div>
+        </div>
+
+        <!-- Stage Objective Pills -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          <div class="bg-[#100d25] border border-[#4d3f72] px-3 py-1.5 rounded-xl flex items-center gap-2">
+            <span class="text-sm">🪙</span>
+            <span id="stage-coins" class="font-mono-tech text-xs sm:text-sm font-bold text-[#ffd43b]">0/5</span>
+          </div>
+          <div class="bg-[#100d25] border border-[#68f9e6]/50 px-3 py-1.5 rounded-xl flex items-center gap-2">
+            <span class="text-sm">📦</span>
+            <span id="stage-chests" class="font-mono-tech text-xs sm:text-sm font-bold text-[#68f9e6]">Baús: 0/2</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Game Canvas Wrapper -->
+      <div id="canvas-wrapper" class="relative rounded-2xl overflow-hidden border-2 border-[#68f9e6]/80 shadow-[0_14px_45px_rgba(0,0,0,0.75)] bg-[#1572c6] aspect-[16/9] max-h-[460px] w-full select-none">
+        <canvas id="game-canvas"></canvas>
+
+        <!-- Floating Contextual Prompt inside Canvas -->
+        <div id="game-hint-banner" class="absolute top-3 left-1/2 -translate-x-1/2 bg-[#100d25]/85 backdrop-blur-sm border border-[#ffd43b]/70 text-[#ffd43b] font-mono-tech text-[11px] sm:text-xs px-3.5 py-1.5 rounded-full shadow-lg pointer-events-none text-center whitespace-nowrap">
+          Use ◀ ▶ ou A/D para andar • ESPAÇO / W para pular até os baús!
+        </div>
+
+        <!-- Stage Complete Overlay Banner -->
+        <div id="stage-clear-overlay" class="hidden absolute inset-0 bg-[#100d25]/80 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center z-20">
+          <div class="text-4xl sm:text-5xl mb-2 float-slow">🏆</div>
+          <div class="font-mono-tech text-xs text-[#c0ff79] tracking-widest uppercase font-bold">FASE CONCLUÍDA!</div>
+          <h3 id="stage-clear-title" class="text-2xl sm:text-3xl font-extrabold text-white mt-1">Mecânicas Dominadas!</h3>
+          <p id="stage-clear-desc" class="text-sm text-[#c8bfdc] mt-2 max-w-md">
+            Você abriu os 2 baús de desafio desta fase e garantiu seu XP!
+          </p>
+          <button id="btn-next-phase-trail" type="button"
+            class="btn-arcade mt-5 px-6 py-3.5 rounded-xl bg-[#c0ff79] text-[#102110] font-extrabold text-sm sm:text-base shadow-[0_5px_0_#588536]">
+            Continuar na Trilha →
+          </button>
+        </div>
+      </div>
+
+      <!-- Controls Bar (Desktop Legend + Mobile Touch Gamepad) -->
+      <div class="mt-3 bg-[#1b1636] border border-[#4d3f72] rounded-2xl p-3 sm:p-4">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+          <!-- Touch Controls (Always usable on mobile & tablet, also clickable on desktop) -->
+          <div class="flex items-center justify-between w-full md:w-auto gap-6">
+            <div class="flex items-center gap-3">
+              <button id="touch-left" type="button" aria-label="Mover para esquerda"
+                class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#261f4a] active:bg-[#68f9e6] active:text-[#100d25] border-2 border-[#68f9e6]/50 text-white text-2xl font-bold flex items-center justify-center shadow-[0_4px_0_#100d25] select-none touch-none">
+                ◀
+              </button>
+              <button id="touch-right" type="button" aria-label="Mover para direita"
+                class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#261f4a] active:bg-[#68f9e6] active:text-[#100d25] border-2 border-[#68f9e6]/50 text-white text-2xl font-bold flex items-center justify-center shadow-[0_4px_0_#100d25] select-none touch-none">
+                ▶
+              </button>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <button id="touch-attack" type="button" aria-label="Atacar com espada"
+                class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#261f4a] active:bg-[#ff87ce] active:text-[#100d25] border-2 border-[#ff87ce]/60 text-[#ff87ce] text-xl font-bold flex items-center justify-center shadow-[0_4px_0_#100d25] select-none touch-none"
+                title="Espada (Tecla X ou K)">
+                ⚔️
+              </button>
+              <button id="touch-jump" type="button" aria-label="Pular"
+                class="px-5 h-14 sm:h-16 rounded-2xl bg-[#c0ff79] active:brightness-90 text-[#102110] font-extrabold text-sm sm:text-base flex items-center justify-center shadow-[0_4px_0_#588536] select-none touch-none">
+                PULAR ▲
+              </button>
+            </div>
+          </div>
+
+          <!-- Game Design Rule Legend (Pedagogical reinforcement) -->
+          <div class="text-xs text-[#c8bfdc] bg-[#100d25]/80 border border-[#4d3f72] rounded-xl px-3.5 py-2.5 w-full md:w-auto">
+            <div class="font-mono-tech text-[11px] font-bold text-[#68f9e6] mb-1">REGRAS DESTA FASE (SE… ENTÃO…):</div>
+            <ul class="space-y-0.5 text-[11px] sm:text-xs">
+              <li>• <strong class="text-[#ffd43b]">SE</strong> tocar no Baú <span class="text-[#68f9e6]">ENTÃO</span> abre o Desafio (+100 XP).</li>
+              <li>• <strong class="text-[#ff87ce]">SE</strong> pular sobre o Ogro ou usar ⚔️ <span class="text-[#68f9e6]">ENTÃO</span> derrota o inimigo!</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         SCREEN 4: FINAL RESULT & PRINTABLE PEDAGOGICAL REPORT
+    ========================================================== -->
+    <section id="screen-result" class="hidden max-w-3xl mx-auto">
+      <div class="bg-[#1b1636] print-card border border-[#4d3f72] rounded-2xl p-6 sm:p-8 shadow-2xl">
+        <p class="font-mono-tech text-xs font-bold tracking-widest text-[#ff87ce] print-text-dark uppercase">
+          MISSÃO 06 / RESULTADO INDIVIDUAL
+        </p>
+        <h1 id="result-title" tabindex="-1" class="text-2xl sm:text-4xl font-extrabold text-white print-text-dark mt-1">
+          Missão concluída!
+        </h1>
+        <p id="result-student" class="text-base sm:text-lg font-bold text-[#68f9e6] print-text-dark mt-2"></p>
+        <p id="result-date" class="text-xs sm:text-sm text-[#c8bfdc] print-text-dark mt-0.5"></p>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-3 gap-3 sm:gap-4 my-6">
+          <div class="bg-[#100d25] print-card border border-[#4d3f72] rounded-xl p-3 sm:p-4 text-center">
+            <strong id="result-score" class="block font-mono-tech text-xl sm:text-3xl font-extrabold text-[#68f9e6] print-text-dark">0 / 12</strong>
+            <span class="text-xs sm:text-sm text-[#c8bfdc] print-text-dark">acertos</span>
+          </div>
+          <div class="bg-[#100d25] print-card border border-[#4d3f72] rounded-xl p-3 sm:p-4 text-center">
+            <strong id="result-xp" class="block font-mono-tech text-xl sm:text-3xl font-extrabold text-[#c0ff79] print-text-dark">0</strong>
+            <span class="text-xs sm:text-sm text-[#c8bfdc] print-text-dark">XP total</span>
+          </div>
+          <div class="bg-[#100d25] print-card border border-[#4d3f72] rounded-xl p-3 sm:p-4 text-center">
+            <strong id="result-percent" class="block font-mono-tech text-xl sm:text-3xl font-extrabold text-[#ffd43b] print-text-dark">0%</strong>
+            <span class="text-xs sm:text-sm text-[#c8bfdc] print-text-dark">aproveitamento</span>
+          </div>
+        </div>
+
+        <p id="result-message" class="text-sm sm:text-base text-white print-text-dark mb-5"></p>
+
+        <!-- Team Activity Box from Original Index -->
+        <div class="bg-[#261f4a] print-card border border-[#68f9e6]/50 rounded-xl p-4 sm:p-5 mb-6">
+          <strong class="block text-base text-[#ffd43b] print-text-dark mb-1">
+            A regra decide. O feedback comunica.
+          </strong>
+          <p class="text-xs sm:text-sm text-[#e4dcf5] print-text-dark leading-relaxed">
+            No projeto da equipe, registrem cinco situações principais e mais duas regras próprias. Para cada uma: situação, <strong>SE</strong> (condição) e <strong>ENTÃO</strong> (consequência). Depois, testem e ajustem.
+          </p>
+        </div>
+
+        <!-- Print & Restart Buttons -->
+        <div class="no-print flex flex-wrap gap-3 mb-3">
+          <button id="btn-print" type="button"
+            class="btn-arcade px-5 py-3.5 rounded-xl bg-[#c0ff79] text-[#102110] font-extrabold text-sm sm:text-base shadow-[0_4px_0_#588536] flex items-center gap-2">
+            <span>🖨️ Imprimir / Salvar em PDF</span>
+          </button>
+          <button id="btn-back-to-trail-from-result" type="button"
+            class="btn-arcade px-5 py-3.5 rounded-xl bg-[#261f4a] border border-[#68f9e6]/60 text-[#68f9e6] font-bold text-sm sm:text-base">
+            🗺️ Voltar para a Trilha
+          </button>
+          <button id="btn-restart" type="button"
+            class="btn-arcade px-5 py-3.5 rounded-xl bg-transparent border border-[#65567d] text-[#c8bfdc] hover:text-white font-bold text-sm sm:text-base">
+            ↻ Reiniciar missão
+          </button>
+        </div>
+        <p class="no-print text-xs text-[#a599c2] mb-8">
+          Na janela de impressão, escolha “Salvar como PDF” para entregar seu resultado. As respostas ficam apenas nesta aba: salve antes de fechar ou reiniciar.
+        </p>
+
+        <!-- Complete 12-Challenge Review -->
+        <h2 class="text-xl sm:text-2xl font-extrabold text-white print-text-dark border-b border-[#4d3f72] pb-3 mb-2">
+          Revisão dos 12 desafios
+        </h2>
+        <div id="result-review-list" class="divide-y divide-[#4d3f72]">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-[#4d3f72]/60 py-5 px-4 text-center text-xs text-[#a599c2] mt-auto">
+    Retro Mobile Challenge • Aula 13 • Academia de Game Designers<br>
+    Atividade de aprendizagem gamificada • Funciona offline • Não envia dados.
+  </footer>
+
+  <!-- =========================================================
+       MODAL 1: CHEST CHALLENGE QUIZ MODAL (Inside Platformer)
+  ========================================================== -->
+  <div id="quiz-modal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div class="bg-[#1b1636] border-2 border-[#68f9e6] rounded-2xl max-w-2xl w-full p-5 sm:p-7 shadow-[0_20px_60px_rgba(0,0,0,0.85)] my-auto">
+      <div class="flex items-center justify-between gap-2 mb-3">
+        <span id="modal-phase-badge" class="font-mono-tech text-xs font-bold text-[#ff87ce] uppercase tracking-wider">
+          FASE 1 • DESAFIO 1 DE 12
+        </span>
+        <span class="bg-[#ffd43b]/15 border border-[#ffd43b]/50 text-[#ffd43b] font-mono-tech text-xs font-bold px-2.5 py-1 rounded-lg">
+          📦 BAÚ DE TESOURO (+100 XP)
+        </span>
+      </div>
+
+      <h3 id="modal-question" class="text-lg sm:text-2xl font-extrabold text-white leading-snug mb-1">
+        Pergunta aqui
+      </h3>
+      <p class="text-xs text-[#a599c2] mb-4">Selecione uma alternativa e confirme sua resposta para abrir o baú.</p>
+
+      <!-- Options List -->
+      <div id="modal-options" class="grid gap-2.5 mb-5" role="group" aria-labelledby="modal-question">
+        <!-- Populated dynamically -->
+      </div>
+
+      <!-- Pedagogical Feedback Box -->
+      <div id="modal-feedback" class="hidden rounded-xl p-4 mb-5 border-l-4">
+        <!-- Populated dynamically -->
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center justify-end gap-3">
+        <button id="modal-btn-confirm" type="button" disabled
+          class="btn-arcade w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[#c0ff79] disabled:opacity-45 disabled:cursor-not-allowed text-[#102110] font-extrabold text-sm sm:text-base shadow-[0_4px_0_#588536]">
+          Confirmar resposta
+        </button>
+        <button id="modal-btn-continue" type="button"
+          class="hidden btn-arcade w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[#68f9e6] text-[#100d25] font-extrabold text-sm sm:text-base shadow-[0_4px_0_#2b8a7e]">
+          Continuar aventura →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       MODAL 2: CUSTOM RESTART CONFIRMATION (No window.confirm!)
+  ========================================================== -->
+  <div id="confirm-modal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+    <div class="bg-[#1b1636] border-2 border-[#ff87ce] rounded-2xl max-w-md w-full p-6 shadow-2xl">
+      <h3 class="text-xl font-extrabold text-white mb-2">Reiniciar missão?</h3>
+      <p class="text-sm text-[#c8bfdc] mb-5">
+        Reiniciar apaga esta tentativa atual (XP, corações e respostas). Você já salvou ou imprimiu o resultado em PDF de que precisa?
+      </p>
+      <div class="flex justify-end gap-3">
+        <button id="confirm-cancel" type="button"
+          class="px-4 py-2.5 rounded-xl bg-[#261f4a] border border-[#65567d] text-white font-bold text-sm">
+          Cancelar
+        </button>
+        <button id="confirm-ok" type="button"
+          class="btn-arcade px-4 py-2.5 rounded-xl bg-[#ff87ce] text-[#100d25] font-extrabold text-sm shadow-[0_3px_0_#9e3d78]">
+          Sim, reiniciar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    'use strict';
+
+    /* =========================================================================
+       1. PEDAGOGICAL CONTENT (EXACT DATA FROM ORIGINAL INDEX.HTML)
+    ========================================================================= */
+    const PHASES = [
+      { id: 0, name: 'Mecânicas', icon: '🕹️', subtitle: 'Ações do jogador e sistemas de jogabilidade', skyTop: '#1158a8', skyBot: '#3898ec' },
+      { id: 1, name: 'Regras', icon: '📜', subtitle: 'Condições, limites e consistência', skyTop: '#164b9c', skyBot: '#46a3f0' },
+      { id: 2, name: 'SE… ENTÃO…', icon: '⚡', subtitle: 'Estrutura condicional de eventos', skyTop: '#243b8c', skyBot: '#5395e8' },
+      { id: 3, name: 'Lógica', icon: '🧠', subtitle: 'Ação → Condição → Decisão → Consequência', skyTop: '#2f327d', skyBot: '#6182db' },
+      { id: 4, name: 'Feedback', icon: '✨', subtitle: 'Comunicar visualmente e sonoramente o estado', skyTop: '#1f497d', skyBot: '#47a8bd' },
+      { id: 5, name: 'Game designer', icon: '🏆', subtitle: 'Testar, observar, ajustar e equilibrar', skyTop: '#193566', skyBot: '#3b82b8' }
+    ];
+
+    const QUESTIONS = [
+      [0, 'Qual alternativa apresenta uma mecânica de jogo?', ['Começar com três vidas.', 'Pular e coletar moedas.', 'Cada moeda valer 10 pontos.', 'Encerrar a partida quando as vidas chegarem a zero.'], 1, 'Mecânica é o que o jogador pode fazer ou um sistema de jogabilidade. Pular e coletar são ações; as outras alternativas definem regras.'],
+      [0, 'A coleta continua, mas cada moeda passa de 10 para 100 pontos. O que mudou?', ['A mecânica deixou de existir.', 'Somente a aparência da moeda.', 'Uma regra da mecânica de coleta.', 'O comando de movimento.'], 2, 'A mecânica continua sendo coletar. Seu valor é uma regra; mudar essa regra pode alterar o equilíbrio e a experiência do jogo.'],
+      [1, 'Qual frase define uma regra para a mecânica de pulo?', ['O jogador pode pular.', 'O personagem usa roupa azul.', 'O cenário tem montanhas.', 'O personagem só pode pular novamente após tocar o chão.'], 3, 'A regra estabelece uma condição ou limite para o funcionamento da mecânica: quando um novo pulo é permitido.'],
+      [1, 'Por que as regras precisam ser consistentes?', ['Para o jogador compreender as consequências e tomar decisões.', 'Para toda partida ter o mesmo resultado.', 'Para dispensar os testes.', 'Para impedir qualquer desafio.'], 0, 'Regras consistentes tornam as consequências compreensíveis. Uma moeda que muda de efeito sem explicação pode tornar o jogo confuso ou injusto.'],
+      [2, 'Complete: SE o personagem tocar na moeda, ENTÃO…', ['verificar se ele tocou na moeda.', 'adicionar 10 pontos e remover a moeda coletada.', 'perguntar qual é a condição.', 'mudar uma regra aleatoriamente.'], 1, 'SE apresenta a condição. ENTÃO apresenta a consequência: pontuar e remover o item, conforme a regra definida para este jogo.'],
+      [2, 'Qual é a condição em “SE as vidas chegarem a zero, ENTÃO mostrar Game Over”?', ['Mostrar Game Over.', 'O jogador vencer.', 'As vidas chegarem a zero.', 'Ganhar uma vida.'], 2, 'A condição é vidas iguais a zero. Mostrar Game Over é a consequência dessa condição.'],
+      [3, 'Qual sequência organiza a lógica apresentada na aula?', ['Feedback → vitória → cenário → ação.', 'Consequência → ação → condição → decisão.', 'Ação → consequência → condição → decisão.', 'Ação → condição → decisão → consequência.'], 3, 'Partimos da ação, verificamos uma condição, tomamos a decisão correspondente e aplicamos a consequência. Isso ajuda a transformar o projeto em código.'],
+      [3, 'A regra diz que tocar no inimigo retira uma vida. Houve colisão, mas a vida não mudou. O que investigar primeiro?', ['A verificação da colisão e a execução da regra de dano.', 'A cor do menu.', 'A música de vitória.', 'O nome do personagem.'], 0, 'Verifique se a condição foi detectada e se a consequência foi executada. O problema não se resolve apenas comunicando o dano.'],
+      [4, 'O jogador perdeu uma vida, mas não percebeu. Qual melhoria trata diretamente desse problema?', ['Remover a regra de dano.', 'Atualizar o indicador de vidas e mostrar um efeito visual de dano.', 'Trocar o objetivo sem avisar.', 'Aumentar o valor das moedas.'], 1, 'O feedback comunica o que aconteceu. O indicador de vidas e o efeito de dano ajudam o jogador a perceber a consequência.'],
+      [4, 'Qual alternativa distingue corretamente regra e feedback?', ['A regra toca um som; o feedback decide quantas vidas restam.', 'Regra e feedback são sempre a mesma coisa.', 'A regra retira uma vida; o feedback mostra o dano ao jogador.', 'O feedback substitui as condições do jogo.'], 2, 'A regra decide. O feedback comunica. Retirar uma vida altera o estado do jogo; mostrar o dano torna essa mudança perceptível.'],
+      [5, 'Nos testes, a equipe percebe que uma regra deixou o jogo difícil demais. Como agir?', ['Manter a regra para sempre.', 'Excluir todas as regras.', 'Parar os testes e publicar imediatamente.', 'Observar o problema, ajustar a regra e testar novamente.'], 3, 'Criar jogos envolve planejar, testar, observar e ajustar. As regras podem ser refinadas para melhorar a experiência e o equilíbrio.'],
+      [5, 'Qual entrega atende à missão prática da Aula 13?', ['Cinco situações principais e mais duas regras próprias, cada uma com condição e consequência.', 'Somente o desenho da tela inicial.', 'Duas regras sem explicar quando acontecem.', 'Apenas copiar código antes de definir as regras.'], 0, 'São sete situações ao todo: cinco principais e duas regras específicas do projeto. Organize cada uma em situação, SE e ENTÃO, para depois testar e programar com clareza.']
+    ];
+
+    /* =========================================================================
+       2. RETRO 8-BIT SYNTHESIZER (WEB AUDIO API - NO EXTERNAL URLS)
+    ========================================================================= */
+    class RetroAudio {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) this.ctx = new AudioCtx();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playTone(freq, type, duration, vol = 0.12, slideTo = null, delay = 0) {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime + delay;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, now);
+        if (slideTo) {
+          osc.frequency.exponentialRampToValueAtTime(slideTo, now + duration);
+        }
+        gain.gain.setValueAtTime(vol, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + duration);
+      }
+
+      jump() {
+        this.playTone(190, 'square', 0.16, 0.09, 520);
+      }
+      coin() {
+        this.playTone(987, 'square', 0.08, 0.09, null, 0);
+        this.playTone(1318, 'square', 0.18, 0.09, null, 0.07);
+      }
+      sword() {
+        this.playTone(420, 'sawtooth', 0.11, 0.08, 110);
+      }
+      enemyHit() {
+        this.playTone(220, 'square', 0.12, 0.11, 80);
+      }
+      chestOpen() {
+        this.playTone(330, 'triangle', 0.12, 0.12, 660);
+      }
+      correct() {
+        this.playTone(523.25, 'square', 0.1, 0.1, null, 0);
+        this.playTone(659.25, 'square', 0.1, 0.1, null, 0.09);
+        this.playTone(783.99, 'square', 0.1, 0.1, null, 0.18);
+        this.playTone(1046.5, 'square', 0.26, 0.12, null, 0.27);
+      }
+      wrong() {
+        this.playTone(210, 'sawtooth', 0.18, 0.12, 140, 0);
+        this.playTone(155, 'sawtooth', 0.28, 0.12, 95, 0.16);
+      }
+      stageClear() {
+        const notes = [523, 659, 784, 1046, 784, 1046];
+        notes.forEach((n, idx) => {
+          this.playTone(n, 'square', idx === notes.length - 1 ? 0.35 : 0.11, 0.11, null, idx * 0.11);
+        });
+      }
+    }
+
+    const sfx = new RetroAudio();
+
+    /* =========================================================================
+       3. APPLICATION STATE
+    ========================================================================= */
+    const state = {
+      studentName: '',
+      hearts: 3,
+      maxHearts: 3,
+      bonusCoinXP: 0,
+      // answers[qIndex] = chosenOptionIndex (0..3) | undefined
+      answers: new Array(12).fill(undefined),
+      currentPhaseIndex: 0,
+      activeQuestionIndex: null,
+      selectedOption: null
+    };
+
+    function getQuizXP() {
+      return state.answers.reduce((acc, ans, idx) => {
+        if (ans === undefined) return acc;
+        return acc + (ans === QUESTIONS[idx][3] ? 100 : 0);
+      }, 0);
+    }
+
+    function getAnsweredCount() {
+      return state.answers.filter(a => a !== undefined).length;
+    }
+
+    function isPhaseCompleted(phaseIdx) {
+      return state.answers[phaseIdx * 2] !== undefined && state.answers[phaseIdx * 2 + 1] !== undefined;
+    }
+
+    function isPhaseUnlocked(phaseIdx) {
+      if (phaseIdx === 0) return true;
+      return isPhaseCompleted(phaseIdx - 1);
+    }
+
+    /* =========================================================================
+       4. PROCEDURAL PIXEL-ART SPRITE ENGINE (Matching Screenshot Aesthetic)
+    ========================================================================= */
+    const PixelArt = {
+      // Draw a crisp pixel grid helper
+      drawGrid(ctx, x, y, scale, rows, palette) {
+        for (let r = 0; r < rows.length; r++) {
+          const row = rows[r];
+          for (let c = 0; c < row.length; c++) {
+            const ch = row[c];
+            if (ch !== '.' && palette[ch]) {
+              ctx.fillStyle = palette[ch];
+              ctx.fillRect(Math.round(x + c * scale), Math.round(y + r * scale), Math.ceil(scale), Math.ceil(scale));
+            }
+          }
+        }
+      },
+
+      // Grass + Dirt Platform Tile (Exact aesthetic from user's image)
+      drawPlatform(ctx, x, y, w, h) {
+        const block = 16;
+        // Dirt base
+        ctx.fillStyle = '#8b4513';
+        ctx.fillRect(x, y, w, h);
+
+        // Dirt pixel speckles
+        ctx.fillStyle = '#5c2c0c';
+        for (let px = x + 4; px < x + w - 4; px += 12) {
+          for (let py = y + 14; py < y + h - 4; py += 12) {
+            ctx.fillRect(px, py, 4, 4);
+            if (px + 6 < x + w - 4) ctx.fillRect(px + 6, py + 5, 3, 3);
+          }
+        }
+
+        // Top vibrant green grass layer
+        ctx.fillStyle = '#18b848';
+        ctx.fillRect(x, y, w, 10);
+
+        // Highlight top edge
+        ctx.fillStyle = '#4be36d';
+        ctx.fillRect(x, y, w, 3);
+
+        // Hanging grass teeth
+        ctx.fillStyle = '#0e8732';
+        for (let gx = x; gx < x + w; gx += block) {
+          ctx.fillRect(gx + 2, y + 10, 6, 4);
+          ctx.fillRect(gx + 10, y + 10, 4, 3);
+        }
+      },
+
+      // Pixel Hero (Brown hair, smiling face, red shirt, blue pants, golden-hilt sword)
+      drawHero(ctx, x, y, facing, frame, attacking, hurtTimer) {
+        if (hurtTimer > 0 && Math.floor(hurtTimer * 20) % 2 === 0) return; // Blink feedback on damage
+
+        ctx.save();
+        const w = 32;
+        const h = 42;
+        if (facing === -1) {
+          ctx.translate(x + w, y);
+          ctx.scale(-1, 1);
+          x = 0;
+          y = 0;
+        }
+
+        const s = 3; // pixel scale
+        const pal = {
+          H: '#7a3b1e', // Hair
+          S: '#ffd5b8', // Skin
+          W: '#ffffff', // Smile / eyes
+          E: '#22181c', // Eyes
+          R: '#e62e2e', // Red shirt
+          B: '#1d4ed8', // Blue pants
+          O: '#5c2c0c', // Boots
+          G: '#ffd43b', // Sword guard
+          L: '#e2e8f0'  // Sword blade
+        };
+
+        const walkOffset = frame === 1 ? 1 : 0;
+        const heroRows = [
+          '...HHHHHH...',
+          '..HHHHHHHH..',
+          '..HHSSSSSH..',
+          '..HSSESSEH..',
+          '..HSSSSSSH..',
+          '..HSSWWWSH..',
+          '...SSSSSS...',
+          '..RRRRRRRR..',
+          '.RRRRRRRRRR.',
+          '.SSRRRRRRSS.',
+          '..BBBBBBBB..',
+          '..BBB..BBB..',
+          walkOffset ? '.BBB....BBB.' : '..BBB..BBB..',
+          '.OOO....OOO.'
+        ];
+
+        this.drawGrid(ctx, x, y, s, heroRows, pal);
+
+        // Draw Sword
+        if (attacking > 0) {
+          // Swinging horizontal sword slash
+          ctx.fillStyle = '#ffd43b';
+          ctx.fillRect(x + 28, y + 22, 6, 8);
+          ctx.fillStyle = '#f8fafc';
+          ctx.fillRect(x + 34, y + 23, 22, 5);
+          // Slash arc effect
+          ctx.fillStyle = 'rgba(104, 249, 230, 0.65)';
+          ctx.fillRect(x + 48, y + 14, 10, 22);
+        } else {
+          // Idle / Running diagonal sword at hand
+          ctx.fillStyle = '#ffd43b';
+          ctx.fillRect(x + 26, y + 24, 5, 5);
+          ctx.fillStyle = '#f8fafc';
+          ctx.fillRect(x + 30, y + 27, 4, 4);
+          ctx.fillRect(x + 33, y + 30, 4, 4);
+          ctx.fillRect(x + 36, y + 33, 4, 4);
+        }
+
+        ctx.restore();
+      },
+
+      // Goblin / Ogre Enemy (Brownish-olive monster with teeth & purple shorts like image)
+      drawGoblin(ctx, x, y, time, defeated) {
+        if (defeated) return;
+        const bob = Math.sin(time * 5) * 2;
+        const s = 3;
+        const pal = {
+          G: '#8c7432', // Goblin skin
+          D: '#5e4c1d', // Darker shade
+          E: '#1a1412', // Eyes
+          W: '#ffffff', // Teeth
+          P: '#ff87ce', // Earrings
+          V: '#6b3fa0'  // Purple shorts
+        };
+        const rows = [
+          '...GGGGGG...',
+          '..GGGGGGGG..',
+          '.GGGGEGEGGG.',
+          'PGGGGGGGGGGP',
+          '.GGGWWWWGGG.',
+          '..GGWGGWGG..',
+          '.GGGGGGGGGG.',
+          'GGGGGGGGGGGG',
+          'SSGGGGGGGGSS'.replace(/S/g, 'G'),
+          '..VVVVVVVV..',
+          '..VVV..VVV..',
+          '..WWW..WWW..'
+        ];
+        this.drawGrid(ctx, x, y + bob, s, rows, pal);
+      },
+
+      // Spinning Golden Coin
+      drawCoin(ctx, x, y, time, idx) {
+        const bob = Math.sin(time * 4 + idx) * 3;
+        const phase = Math.abs(Math.cos(time * 3.5 + idx));
+        const w = Math.max(6, Math.round(20 * phase));
+        const cx = x + 10 - w / 2;
+        const cy = y + bob;
+
+        ctx.fillStyle = '#d97706';
+        ctx.fillRect(cx, cy, w, 20);
+        ctx.fillStyle = '#ffd43b';
+        ctx.fillRect(cx + 2, cy + 2, Math.max(2, w - 4), 16);
+        if (w > 10) {
+          ctx.fillStyle = '#fff3bf';
+          ctx.fillRect(cx + 4, cy + 4, 3, 10);
+        }
+      },
+
+      // Pulsing Pixel Heart
+      drawHeart(ctx, x, y, time) {
+        const pulse = Math.sin(time * 5) > 0 ? 1 : 0;
+        const s = 3;
+        const pal = { R: '#ff2a55', L: '#ff8fa3', D: '#a61132' };
+        const rows = [
+          '.RR...RR.',
+          'RLRR.RRRR',
+          'RLRRRRRRR',
+          'RRRRRRRRD',
+          '.RRRRRRD.',
+          '..RRRRD..',
+          '...RRD...',
+          '....D....'
+        ];
+        this.drawGrid(ctx, x, y - pulse * 2, s, rows, pal);
+      },
+
+      // Treasure Chest (Closed vs Opened)
+      drawChest(ctx, x, y, isOpen, time, numberLabel) {
+        const bob = !isOpen ? Math.sin(time * 4) * 2 : 0;
+        const cy = y + bob;
+
+        // Glow aura when closed so student clearly spots the challenge objective
+        if (!isOpen) {
+          ctx.fillStyle = 'rgba(104, 249, 230, 0.22)';
+          ctx.fillRect(x - 6, cy - 6, 52, 44);
+        }
+
+        // Chest Body
+        ctx.fillStyle = isOpen ? '#5c3a21' : '#855834';
+        ctx.fillRect(x, cy + 12, 40, 22);
+
+        // Iron Bands
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(x, cy + 12, 5, 22);
+        ctx.fillRect(x + 35, cy + 12, 5, 22);
+        ctx.fillRect(x, cy + 29, 40, 5);
+
+        if (!isOpen) {
+          // Closed Lid
+          ctx.fillStyle = '#a36e42';
+          ctx.fillRect(x, cy, 40, 13);
+          ctx.fillStyle = '#cbd5e1';
+          ctx.fillRect(x, cy, 40, 4);
+          ctx.fillRect(x, cy, 5, 13);
+          ctx.fillRect(x + 35, cy, 5, 13);
+          // Golden Lock
+          ctx.fillStyle = '#ffd43b';
+          ctx.fillRect(x + 16, cy + 9, 8, 9);
+          ctx.fillStyle = '#100d25';
+          ctx.fillRect(x + 19, cy + 12, 2, 3);
+
+          // Floating "?" Badge above chest
+          ctx.fillStyle = '#100d25';
+          ctx.fillRect(x + 9, cy - 22, 22, 16);
+          ctx.strokeStyle = '#68f9e6';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(x + 9, cy - 22, 22, 16);
+          ctx.fillStyle = '#ffd43b';
+          ctx.font = 'bold 11px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(numberLabel, x + 20, cy - 10);
+        } else {
+          // Open Lid tilted back + golden shine inside
+          ctx.fillStyle = '#6b4426';
+          ctx.fillRect(x, cy - 8, 40, 10);
+          ctx.fillStyle = '#ffd43b';
+          ctx.fillRect(x + 6, cy + 8, 28, 6);
+          ctx.fillStyle = '#c0ff79';
+          ctx.font = 'bold 11px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText('✓ OK', x + 20, cy - 14);
+        }
+      },
+
+      // Pixel Cloud & Pixel Tree
+      drawCloud(ctx, x, y, scale = 1) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.fillRect(x + 16 * scale, y, 48 * scale, 12 * scale);
+        ctx.fillRect(x + 8 * scale, y + 8 * scale, 68 * scale, 12 * scale);
+        ctx.fillRect(x, y + 16 * scale, 84 * scale, 10 * scale);
+      },
+
+      drawTree(ctx, x, y) {
+        // Trunk
+        ctx.fillStyle = '#7c3f1d';
+        ctx.fillRect(x + 22, y + 44, 16, 46);
+        ctx.fillStyle = '#572a11';
+        ctx.fillRect(x + 26, y + 44, 5, 46);
+        // Canopy
+        ctx.fillStyle = '#0e8732';
+        ctx.fillRect(x + 4, y + 14, 52, 34);
+        ctx.fillStyle = '#18b848';
+        ctx.fillRect(x + 10, y + 4, 40, 36);
+        ctx.fillStyle = '#4be36d';
+        ctx.fillRect(x + 16, y + 8, 22, 10);
+      }
+    };
+
+    /* =========================================================================
+       5. INTRO SCREEN LIVE PREVIEW CANVAS (Recreates User's Screenshot Scene)
+    ========================================================================= */
+    function startIntroPreview() {
+      const canvas = document.getElementById('preview-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      canvas.width = 640;
+      canvas.height = 360;
+
+      function renderPreview(ts) {
+        if (document.getElementById('screen-intro').classList.contains('hidden')) return;
+        const t = ts * 0.001;
+
+        // Sky gradient + pixel wave horizon (Matching image_fd35ac.jpg)
+        ctx.fillStyle = '#1264b8';
+        ctx.fillRect(0, 0, 640, 360);
+
+        // Pixelated background skyline waves
+        ctx.fillStyle = '#1c7cd6';
+        for (let wx = 0; wx < 640; wx += 32) {
+          ctx.fillRect(wx, 85, 16, 150);
+          ctx.fillRect(wx + 8, 77, 16, 8);
+        }
+        ctx.fillStyle = '#3898ec';
+        for (let wx = 0; wx < 640; wx += 32) {
+          ctx.fillRect(wx, 235, 32, 125);
+          ctx.fillRect(wx + 8, 227, 16, 8);
+        }
+
+        // Animated Clouds
+        PixelArt.drawCloud(ctx, ((90 + t * 14) % 720) - 80, 38, 1.1);
+        PixelArt.drawCloud(ctx, ((340 + t * 10) % 720) - 80, 128, 0.95);
+        PixelArt.drawCloud(ctx, ((520 + t * 16) % 720) - 80, 26, 0.85);
+
+        // Trees
+        PixelArt.drawTree(ctx, 18, 122);
+        PixelArt.drawTree(ctx, 415, 198);
+
+        // Platforms matching screenshot composition
+        PixelArt.drawPlatform(ctx, 0, 212, 135, 148);
+        PixelArt.drawPlatform(ctx, 165, 165, 140, 38);
+        PixelArt.drawPlatform(ctx, 315, 288, 82, 72);
+        PixelArt.drawPlatform(ctx, 405, 165, 145, 38);
+        PixelArt.drawPlatform(ctx, 555, 220, 85, 140);
+
+        // Pyramid of 5 Spinning Coins
+        const coinCoords = [
+          [205, 95], [245, 95],
+          [185, 128], [225, 128], [265, 128]
+        ];
+        coinCoords.forEach(([cx, cy], i) => PixelArt.drawCoin(ctx, cx, cy, t, i));
+
+        // Heart on middle lower island
+        PixelArt.drawHeart(ctx, 342, 248, t);
+
+        // Hero on left cliff
+        PixelArt.drawHero(ctx, 42, 170, 1, Math.floor(t * 2) % 2, 0, 0);
+
+        // Goblin on upper right platform
+        PixelArt.drawGoblin(ctx, 460 + Math.sin(t * 2) * 18, 128, t, false);
+
+        // Chest on far right cliff
+        PixelArt.drawChest(ctx, 576, 186, false, t, '?');
+
+        requestAnimationFrame(renderPreview);
+      }
+
+      requestAnimationFrame(renderPreview);
+    }
+
+    /* =========================================================================
+       6. PLAYABLE PLATFORMER ENGINE (6 CUSTOM LEVEL LAYOUTS)
+    ========================================================================= */
+    const LEVEL_CONFIGS = [
+      // Phase 0: Mecânicas
+      {
+        platforms: [
+          { x: 0, y: 280, w: 220, h: 120 },
+          { x: 250, y: 225, w: 170, h: 36 },
+          { x: 455, y: 315, w: 110, h: 85 },
+          { x: 585, y: 220, w: 215, h: 180 }
+        ],
+        coins: [
+          { x: 280, y: 185 }, { x: 325, y: 165 }, { x: 370, y: 185 },
+          { x: 495, y: 275 }, { x: 630, y: 180 }
+        ],
+        heart: { x: 495, y: 240 },
+        enemies: [{ x: 620, y: 184, minX: 595, maxX: 705, speed: 65 }],
+        chests: [
+          { x: 320, y: 191, qOffset: 0 },
+          { x: 735, y: 186, qOffset: 1 }
+        ]
+      },
+      // Phase 1: Regras
+      {
+        platforms: [
+          { x: 0, y: 300, w: 190, h: 100 },
+          { x: 220, y: 245, w: 140, h: 34 },
+          { x: 390, y: 185, w: 160, h: 34 },
+          { x: 580, y: 255, w: 220, h: 145 }
+        ],
+        coins: [
+          { x: 245, y: 205 }, { x: 315, y: 205 },
+          { x: 420, y: 145 }, { x: 500, y: 145 }, { x: 635, y: 215 }
+        ],
+        heart: { x: 280, y: 205 },
+        enemies: [{ x: 630, y: 219, minX: 590, maxX: 710, speed: 75 }],
+        chests: [
+          { x: 455, y: 151, qOffset: 0 },
+          { x: 735, y: 221, qOffset: 1 }
+        ]
+      },
+      // Phase 2: SE... ENTÃO...
+      {
+        platforms: [
+          { x: 0, y: 270, w: 180, h: 130 },
+          { x: 215, y: 315, w: 160, h: 85 },
+          { x: 405, y: 245, w: 165, h: 36 },
+          { x: 600, y: 190, w: 200, h: 210 }
+        ],
+        coins: [
+          { x: 240, y: 275 }, { x: 325, y: 275 },
+          { x: 435, y: 205 }, { x: 520, y: 205 }, { x: 645, y: 150 }
+        ],
+        heart: { x: 282, y: 275 },
+        enemies: [{ x: 430, y: 209, minX: 410, maxX: 525, speed: 80 }],
+        chests: [
+          { x: 475, y: 211, qOffset: 0 },
+          { x: 735, y: 156, qOffset: 1 }
+        ]
+      },
+      // Phase 3: Lógica
+      {
+        platforms: [
+          { x: 0, y: 310, w: 175, h: 90 },
+          { x: 205, y: 250, w: 150, h: 34 },
+          { x: 385, y: 295, w: 170, h: 105 },
+          { x: 585, y: 225, w: 215, h: 175 }
+        ],
+        coins: [
+          { x: 230, y: 210 }, { x: 310, y: 210 },
+          { x: 415, y: 255 }, { x: 505, y: 255 }, { x: 635, y: 185 }
+        ],
+        heart: { x: 460, y: 255 },
+        enemies: [
+          { x: 420, y: 259, minX: 395, maxX: 515, speed: 85 },
+          { x: 640, y: 189, minX: 600, maxX: 715, speed: 70 }
+        ],
+        chests: [
+          { x: 265, y: 216, qOffset: 0 },
+          { x: 735, y: 191, qOffset: 1 }
+        ]
+      },
+      // Phase 4: Feedback
+      {
+        platforms: [
+          { x: 0, y: 260, w: 180, h: 140 },
+          { x: 215, y: 200, w: 165, h: 34 },
+          { x: 415, y: 280, w: 165, h: 120 },
+          { x: 610, y: 215, w: 190, h: 185 }
+        ],
+        coins: [
+          { x: 240, y: 160 }, { x: 335, y: 160 },
+          { x: 445, y: 240 }, { x: 530, y: 240 }, { x: 650, y: 175 }
+        ],
+        heart: { x: 488, y: 240 },
+        enemies: [{ x: 440, y: 244, minX: 425, maxX: 540, speed: 90 }],
+        chests: [
+          { x: 285, y: 166, qOffset: 0 },
+          { x: 735, y: 181, qOffset: 1 }
+        ]
+      },
+      // Phase 5: Game Designer (Final Boss Stage!)
+      {
+        platforms: [
+          { x: 0, y: 300, w: 170, h: 100 },
+          { x: 200, y: 240, w: 165, h: 34 },
+          { x: 395, y: 180, w: 175, h: 34 },
+          { x: 600, y: 245, w: 200, h: 155 }
+        ],
+        coins: [
+          { x: 225, y: 200 }, { x: 325, y: 200 },
+          { x: 425, y: 140 }, { x: 525, y: 140 }, { x: 645, y: 205 }
+        ],
+        heart: { x: 275, y: 200 },
+        enemies: [
+          { x: 430, y: 144, minX: 405, maxX: 530, speed: 95 },
+          { x: 640, y: 209, minX: 610, maxX: 715, speed: 95 }
+        ],
+        chests: [
+          { x: 470, y: 146, qOffset: 0 },
+          { x: 735, y: 211, qOffset: 1 }
+        ]
+      }
+    ];
+
+    class PlatformerGame {
+      constructor() {
+        this.canvas = document.getElementById('game-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.W = 800;
+        this.H = 400;
+        this.canvas.width = this.W;
+        this.canvas.height = this.H;
+
+        this.running = false;
+        this.pausedForModal = false;
+        this.lastTime = 0;
+        this.elapsed = 0;
+        this.shakeTimer = 0;
+        this.flashRedTimer = 0;
+
+        this.keys = { left: false, right: false, jump: false };
+        this.particles = [];
+        this.floatingTexts = [];
+
+        this.bindInputs();
+      }
+
+      bindInputs() {
+        window.addEventListener('keydown', (e) => {
+          if (!this.running || this.pausedForModal) return;
+          if (e.code === 'ArrowLeft' || e.code === 'KeyA') this.keys.left = true;
+          if (e.code === 'ArrowRight' || e.code === 'KeyD') this.keys.right = true;
+          if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+            e.preventDefault();
+            this.tryJump();
+          }
+          if (e.code === 'KeyX' || e.code === 'KeyK' || e.code === 'Enter') {
+            this.tryAttack();
+          }
+        });
+
+        window.addEventListener('keyup', (e) => {
+          if (e.code === 'ArrowLeft' || e.code === 'KeyA') this.keys.left = false;
+          if (e.code === 'ArrowRight' || e.code === 'KeyD') this.keys.right = false;
+        });
+
+        // Touch / On-screen Button Bindings
+        const bindHold = (id, keyName) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          const on = (e) => { e.preventDefault(); this.keys[keyName] = true; };
+          const off = (e) => { e.preventDefault(); this.keys[keyName] = false; };
+          el.addEventListener('touchstart', on, { passive: false });
+          el.addEventListener('touchend', off, { passive: false });
+          el.addEventListener('touchcancel', off, { passive: false });
+          el.addEventListener('mousedown', on);
+          el.addEventListener('mouseup', off);
+          el.addEventListener('mouseleave', off);
+        };
+
+        bindHold('touch-left', 'left');
+        bindHold('touch-right', 'right');
+
+        const jumpBtn = document.getElementById('touch-jump');
+        const attackBtn = document.getElementById('touch-attack');
+        if (jumpBtn) {
+          jumpBtn.addEventListener('touchstart', (e) => { e.preventDefault(); this.tryJump(); }, { passive: false });
+          jumpBtn.addEventListener('mousedown', (e) => { e.preventDefault(); this.tryJump(); });
+        }
+        if (attackBtn) {
+          attackBtn.addEventListener('touchstart', (e) => { e.preventDefault(); this.tryAttack(); }, { passive: false });
+          attackBtn.addEventListener('mousedown', (e) => { e.preventDefault(); this.tryAttack(); });
+        }
+      }
+
+      loadStage(phaseIdx) {
+        this.phaseIdx = phaseIdx;
+        const cfg = LEVEL_CONFIGS[phaseIdx];
+
+        this.platforms = cfg.platforms.map(p => ({ ...p }));
+        this.coins = cfg.coins.map(c => ({ ...c, collected: false }));
+        this.heartItem = cfg.heart ? { ...cfg.heart, collected: false } : null;
+        this.enemies = cfg.enemies.map(en => ({ ...en, dir: 1, defeated: false }));
+        this.chests = cfg.chests.map(ch => {
+          const qIdx = phaseIdx * 2 + ch.qOffset;
+          return {
+            ...ch,
+            qIdx,
+            opened: state.answers[qIdx] !== undefined
+          };
+        });
+
+        this.particles = [];
+        this.floatingTexts = [];
+        this.keys = { left: false, right: false, jump: false };
+        this.pausedForModal = false;
+
+        this.resetPlayerPosition();
+        this.updateStageHUD();
+
+        document.getElementById('stage-clear-overlay').classList.add('hidden');
+        this.running = true;
+        this.lastTime = performance.now();
+        requestAnimationFrame((t) => this.loop(t));
+      }
+
+      resetPlayerPosition() {
+        const startPlat = this.platforms[0];
+        this.player = {
+          x: 42,
+          y: startPlat.y - 42,
+          w: 30,
+          h: 42,
+          vx: 0,
+          vy: 0,
+          facing: 1,
+          grounded: false,
+          walkTimer: 0,
+          attackTimer: 0,
+          hurtTimer: 0
+        };
+      }
+
+      tryJump() {
+        if (!this.running || this.pausedForModal) return;
+        // Rule from Question 3: Player can only jump again after touching the ground!
+        if (this.player.grounded) {
+          this.player.vy = -530;
+          this.player.grounded = false;
+          sfx.jump();
+          this.spawnParticles(this.player.x + 15, this.player.y + 42, '#ffffff', 6);
+        }
+      }
+
+      tryAttack() {
+        if (!this.running || this.pausedForModal) return;
+        if (this.player.attackTimer <= 0) {
+          this.player.attackTimer = 0.25;
+          sfx.sword();
+        }
+      }
+
+      spawnParticles(x, y, color, count = 12) {
+        for (let i = 0; i < count; i++) {
+          const angle = (Math.PI * 2 * i) / count + Math.random() * 0.5;
+          const speed = 60 + Math.random() * 140;
+          this.particles.push({
+            x, y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 40,
+            life: 0.55 + Math.random() * 0.25,
+            color,
+            size: 4 + Math.floor(Math.random() * 3)
+          });
+        }
+      }
+
+      spawnFloatingText(x, y, text, color = '#ffd43b') {
+        this.floatingTexts.push({ x, y, text, color, life: 1.1 });
+      }
+
+      updateStageHUD() {
+        const collectedCount = this.coins.filter(c => c.collected).length;
+        const openedCount = this.chests.filter(c => c.opened).length;
+        document.getElementById('stage-coins').textContent = `${collectedCount}/${this.coins.length}`;
+        document.getElementById('stage-chests').textContent = `Baús: ${openedCount}/${this.chests.length}`;
+        updateGlobalHUD();
+      }
+
+      triggerDamageFeedback(reasonText) {
+        if (this.player.hurtTimer > 0) return;
+        this.player.hurtTimer = 1.2;
+        this.shakeTimer = 0.32;
+        this.flashRedTimer = 0.25;
+        sfx.wrong();
+
+        if (state.hearts > 1) {
+          state.hearts -= 1;
+        } else {
+          // Pedagogical safety net: recover hearts so student is never stuck
+          state.hearts = state.maxHearts;
+          this.spawnFloatingText(this.player.x, this.player.y - 24, 'Vidas restauradas!', '#ff87ce');
+        }
+        this.spawnFloatingText(this.player.x, this.player.y - 10, reasonText, '#ff87ce');
+        updateGlobalHUD();
+      }
+
+      update(dt) {
+        this.elapsed += dt;
+        if (this.shakeTimer > 0) this.shakeTimer -= dt;
+        if (this.flashRedTimer > 0) this.flashRedTimer -= dt;
+
+        const p = this.player;
+        if (p.attackTimer > 0) p.attackTimer -= dt;
+        if (p.hurtTimer > 0) p.hurtTimer -= dt;
+
+        // Horizontal Movement
+        const moveSpeed = 235;
+        if (this.keys.left) {
+          p.vx = -moveSpeed;
+          p.facing = -1;
+          p.walkTimer += dt * 10;
+        } else if (this.keys.right) {
+          p.vx = moveSpeed;
+          p.facing = 1;
+          p.walkTimer += dt * 10;
+        } else {
+          p.vx = 0;
+          p.walkTimer = 0;
+        }
+
+        // Gravity
+        p.vy += 1280 * dt;
+        if (p.vy > 750) p.vy = 750;
+
+        p.x += p.vx * dt;
+        if (p.x < 4) p.x = 4;
+        if (p.x + p.w > this.W - 4) p.x = this.W - 4 - p.w;
+
+        const prevBottom = p.y + p.h;
+        p.y += p.vy * dt;
+        p.grounded = false;
+
+        // Platform Top Collisions
+        for (const plat of this.platforms) {
+          if (
+            p.vy >= 0 &&
+            prevBottom <= plat.y + 14 &&
+            p.y + p.h >= plat.y &&
+            p.x + p.w - 6 > plat.x &&
+            p.x + 6 < plat.x + plat.w
+          ) {
+            p.y = plat.y - p.h;
+            p.vy = 0;
+            p.grounded = true;
+          }
+        }
+
+        // Pit Fall Check (SE cair no buraco, ENTÃO volta ao início da fase)
+        if (p.y > this.H + 30) {
+          this.triggerDamageFeedback('Caiu! -1 ❤️');
+          this.resetPlayerPosition();
+        }
+
+        // Coin Collection (SE tocar na moeda, ENTÃO pontuar e remover moeda)
+        for (const c of this.coins) {
+          if (!c.collected && this.aabb(p.x, p.y, p.w, p.h, c.x, c.y, 20, 20)) {
+            c.collected = true;
+            state.bonusCoinXP += 5;
+            sfx.coin();
+            this.spawnParticles(c.x + 10, c.y + 10, '#ffd43b', 10);
+            this.spawnFloatingText(c.x, c.y - 8, '+Moeda!', '#ffd43b');
+            this.updateStageHUD();
+          }
+        }
+
+        // Heart Pickup
+        if (this.heartItem && !this.heartItem.collected) {
+          if (this.aabb(p.x, p.y, p.w, p.h, this.heartItem.x, this.heartItem.y, 26, 24)) {
+            this.heartItem.collected = true;
+            if (state.hearts < state.maxHearts) {
+              state.hearts++;
+              this.spawnFloatingText(this.heartItem.x, this.heartItem.y - 10, '+1 ❤️ Vida!', '#c0ff79');
+            } else {
+              this.spawnFloatingText(this.heartItem.x, this.heartItem.y - 10, 'Vida Cheia! ❤️', '#68f9e6');
+            }
+            sfx.coin();
+            this.spawnParticles(this.heartItem.x + 12, this.heartItem.y + 12, '#ff2a55', 12);
+            updateGlobalHUD();
+          }
+        }
+
+        // Enemies Patrol & Combat
+        const swordBox = p.attackTimer > 0
+          ? {
+              x: p.facing === 1 ? p.x + p.w : p.x - 28,
+              y: p.y + 10,
+              w: 28,
+              h: 24
+            }
+          : null;
+
+        for (const en of this.enemies) {
+          if (en.defeated) continue;
+          en.x += en.dir * en.speed * dt;
+          if (en.x <= en.minX) { en.x = en.minX; en.dir = 1; }
+          if (en.x >= en.maxX) { en.x = en.maxX; en.dir = -1; }
+
+          // Sword Slash defeats enemy
+          if (swordBox && this.aabb(swordBox.x, swordBox.y, swordBox.w, swordBox.h, en.x, en.y, 34, 36)) {
+            en.defeated = true;
+            sfx.enemyHit();
+            this.spawnParticles(en.x + 17, en.y + 18, '#c0ff79', 16);
+            this.spawnFloatingText(en.x, en.y - 10, 'Guardião derrotado!', '#c0ff79');
+            continue;
+          }
+
+          // Player touches enemy
+          if (this.aabb(p.x + 4, p.y + 4, p.w - 8, p.h - 4, en.x + 4, en.y + 4, 26, 30)) {
+            // Stomp from above defeats enemy!
+            if (p.vy > 0 && p.y + p.h - p.vy * dt <= en.y + 14) {
+              en.defeated = true;
+              p.vy = -380;
+              sfx.enemyHit();
+              this.spawnParticles(en.x + 17, en.y + 18, '#c0ff79', 16);
+              this.spawnFloatingText(en.x, en.y - 10, 'Pulo certeiro!', '#c0ff79');
+            } else {
+              // Knockback + Damage Feedback
+              p.vx = p.x < en.x ? -220 : 220;
+              p.vy = -240;
+              this.triggerDamageFeedback('Dano! -1 ❤️');
+            }
+          }
+        }
+
+        // Chest Interaction (SE tocar no Baú fechado, ENTÃO abre Desafio!)
+        for (const ch of this.chests) {
+          if (!ch.opened && this.aabb(p.x, p.y, p.w, p.h, ch.x - 4, ch.y - 4, 48, 42)) {
+            this.keys.left = false;
+            this.keys.right = false;
+            this.pausedForModal = true;
+            sfx.chestOpen();
+            openQuizModal(ch.qIdx, () => {
+              ch.opened = true;
+              this.pausedForModal = false;
+              this.lastTime = performance.now();
+              this.updateStageHUD();
+
+              const wasCorrect = state.answers[ch.qIdx] === QUESTIONS[ch.qIdx][3];
+              this.spawnParticles(ch.x + 20, ch.y + 10, wasCorrect ? '#c0ff79' : '#68f9e6', 22);
+              this.spawnFloatingText(
+                ch.x,
+                ch.y - 18,
+                wasCorrect ? '+100 XP! Baú Aberto!' : 'Baú Aberto!',
+                wasCorrect ? '#c0ff79' : '#68f9e6'
+              );
+
+              // Check if both chests in this stage are now completed
+              if (this.chests.every(item => item.opened)) {
+                setTimeout(() => this.handleStageComplete(), 650);
+              }
+            });
+            break;
+          }
+        }
+
+        // Update Particles & Floating Texts
+        this.particles = this.particles.filter(pt => {
+          pt.x += pt.vx * dt;
+          pt.y += pt.vy * dt;
+          pt.vy += 320 * dt;
+          pt.life -= dt;
+          return pt.life > 0;
+        });
+
+        this.floatingTexts = this.floatingTexts.filter(ft => {
+          ft.y -= 32 * dt;
+          ft.life -= dt;
+          return ft.life > 0;
+        });
+      }
+
+      handleStageComplete() {
+        sfx.stageClear();
+        const phase = PHASES[this.phaseIdx];
+        const all12Done = getAnsweredCount() === 12;
+
+        document.getElementById('stage-clear-title').textContent = `${phase.icon} Fase ${this.phaseIdx + 1}: ${phase.name} Concluída!`;
+        document.getElementById('stage-clear-desc').textContent = all12Done
+          ? 'Incrível! Você completou todas as 6 fases e os 12 desafios da Missão 06!'
+          : 'Excelente trabalho! Os 2 baús desta fase foram resolvidos. Avance para a próxima etapa da trilha!';
+
+        const nextBtn = document.getElementById('btn-next-phase-trail');
+        nextBtn.textContent = all12Done ? 'Ver Resultado Final e Relatório 🏆' : 'Continuar na Trilha →';
+        document.getElementById('stage-clear-overlay').classList.remove('hidden');
+      }
+
+      aabb(ax, ay, aw, ah, bx, by, bw, bh) {
+        return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+      }
+
+      render() {
+        const ctx = this.ctx;
+        const phase = PHASES[this.phaseIdx];
+
+        ctx.save();
+        if (this.shakeTimer > 0) {
+          const mag = this.shakeTimer * 18;
+          ctx.translate((Math.random() - 0.5) * mag, (Math.random() - 0.5) * mag);
+        }
+
+        // Sky Background
+        const grad = ctx.createLinearGradient(0, 0, 0, this.H);
+        grad.addColorStop(0, phase.skyTop);
+        grad.addColorStop(1, phase.skyBot);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, this.W, this.H);
+
+        // Pixel Wave Horizon
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+        for (let wx = 0; wx < this.W; wx += 40) {
+          ctx.fillRect(wx, 105, 20, 180);
+          ctx.fillRect(wx + 10, 95, 20, 10);
+        }
+
+        // Clouds
+        PixelArt.drawCloud(ctx, ((80 + this.elapsed * 12) % 880) - 80, 46, 1.15);
+        PixelArt.drawCloud(ctx, ((420 + this.elapsed * 9) % 880) - 80, 92, 0.9);
+        PixelArt.drawCloud(ctx, ((660 + this.elapsed * 14) % 880) - 80, 38, 1.0);
+
+        // Decorative Pixel Tree on Starting Island
+        const p0 = this.platforms[0];
+        PixelArt.drawTree(ctx, 12, p0.y - 90);
+
+        // Platforms
+        for (const plat of this.platforms) {
+          PixelArt.drawPlatform(ctx, plat.x, plat.y, plat.w, plat.h);
+        }
+
+        // Coins
+        this.coins.forEach((c, idx) => {
+          if (!c.collected) PixelArt.drawCoin(ctx, c.x, c.y, this.elapsed, idx);
+        });
+
+        // Heart Pickup
+        if (this.heartItem && !this.heartItem.collected) {
+          PixelArt.drawHeart(ctx, this.heartItem.x, this.heartItem.y, this.elapsed);
+        }
+
+        // Treasure Chests (Questions)
+        this.chests.forEach((ch, idx) => {
+          const label = `D${ch.qIdx + 1}`;
+          PixelArt.drawChest(ctx, ch.x, ch.y, ch.opened, this.elapsed, label);
+        });
+
+        // Enemies
+        for (const en of this.enemies) {
+          PixelArt.drawGoblin(ctx, en.x, en.y, this.elapsed, en.defeated);
+        }
+
+        // Hero
+        const walkFrame = Math.floor(this.player.walkTimer) % 2;
+        PixelArt.drawHero(
+          ctx,
+          this.player.x,
+          this.player.y,
+          this.player.facing,
+          walkFrame,
+          this.player.attackTimer,
+          this.player.hurtTimer
+        );
+
+        // Particles
+        for (const pt of this.particles) {
+          ctx.fillStyle = pt.color;
+          ctx.fillRect(pt.x, pt.y, pt.size, pt.size);
+        }
+
+        // Floating Texts
+        ctx.font = 'bold 13px "JetBrains Mono", monospace';
+        ctx.textAlign = 'center';
+        for (const ft of this.floatingTexts) {
+          ctx.fillStyle = '#100d25';
+          ctx.fillText(ft.text, ft.x + 16, ft.y + 1);
+          ctx.fillStyle = ft.color;
+          ctx.fillText(ft.text, ft.x + 15, ft.y);
+        }
+
+        // Red Flash Feedback on Damage (Rule + Feedback lesson!)
+        if (this.flashRedTimer > 0) {
+          ctx.fillStyle = `rgba(255, 42, 85, ${this.flashRedTimer * 1.4})`;
+          ctx.fillRect(0, 0, this.W, this.H);
+        }
+
+        ctx.restore();
+      }
+
+      loop(now) {
+        if (!this.running) return;
+        const dt = Math.min(0.05, (now - this.lastTime) / 1000);
+        this.lastTime = now;
+
+        if (!this.pausedForModal) {
+          this.update(dt);
+        }
+        this.render();
+
+        requestAnimationFrame((t) => this.loop(t));
+      }
+    }
+
+    const game = new PlatformerGame();
+
+    /* =========================================================================
+       7. UI NAVIGATION, DUOLINGO TRAIL RENDERING & QUIZ MODAL LOGIC
+    ========================================================================= */
+    function showScreen(screenId) {
+      ['screen-intro', 'screen-trail', 'screen-play', 'screen-result'].forEach(id => {
+        document.getElementById(id).classList.toggle('hidden', id !== screenId);
+      });
+      if (screenId !== 'screen-play') {
+        game.running = false;
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function updateGlobalHUD() {
+      const heartsEl = document.getElementById('hud-hearts');
+      heartsEl.innerHTML = '';
+      for (let i = 0; i < state.maxHearts; i++) {
+        const span = document.createElement('span');
+        span.className = 'text-sm sm:text-base transition-transform';
+        span.textContent = i < state.hearts ? '❤️' : '🖤';
+        heartsEl.appendChild(span);
+      }
+
+      const quizXP = getQuizXP();
+      document.getElementById('hud-xp').textContent = `${quizXP} XP`;
+    }
+
+    function renderTrail() {
+      document.getElementById('trail-student-name').textContent = state.studentName;
+      const answered = getAnsweredCount();
+      document.getElementById('trail-progress-text').textContent = `${answered} / 12 Desafios`;
+
+      const finishBtn = document.getElementById('btn-finish-early');
+      if (answered === 12) {
+        finishBtn.classList.remove('hidden');
+      } else {
+        finishBtn.classList.add('hidden');
+      }
+
+      const container = document.getElementById('trail-nodes');
+      container.innerHTML = '';
+
+      // Sinuous horizontal offsets like Duolingo path
+      const offsets = ['translate-x-0', '-translate-x-10 sm:-translate-x-16', 'translate-x-10 sm:translate-x-16', '-translate-x-8 sm:-translate-x-14', 'translate-x-8 sm:translate-x-14', 'translate-x-0'];
+
+      PHASES.forEach((phase, idx) => {
+        const unlocked = isPhaseUnlocked(idx);
+        const completed = isPhaseCompleted(idx);
+        const isCurrent = unlocked && !completed;
+
+        const q1Done = state.answers[idx * 2] !== undefined;
+        const q2Done = state.answers[idx * 2 + 1] !== undefined;
+        const doneInPhase = (q1Done ? 1 : 0) + (q2Done ? 1 : 0);
+
+        // Connector line above node
+        if (idx > 0) {
+          const line = document.createElement('div');
+          line.className = `w-1.5 h-7 rounded-full -my-3 ${unlocked ? 'bg-[#68f9e6]' : 'bg-[#362c54]'}`;
+          container.appendChild(line);
+        }
+
+        const wrapper = document.createElement('div');
+        wrapper.className = `flex flex-col items-center transition-transform ${offsets[idx]}`;
+
+        // Circular Duolingo Node Button
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.disabled = !unlocked;
+
+        let btnClasses = 'relative w-20 h-20 sm:w-24 sm:h-24 rounded-full flex flex-col items-center justify-center border-4 transition-all ';
+        if (completed) {
+          btnClasses += 'bg-[#c0ff79] border-[#e7ffc9] text-[#102110] shadow-[0_6px_0_#588536] cursor-pointer hover:scale-105';
+        } else if (isCurrent) {
+          btnClasses += 'node-pulse bg-[#68f9e6] border-white text-[#100d25] shadow-[0_6px_0_#248f82] cursor-pointer hover:scale-105';
+        } else {
+          btnClasses += 'bg-[#211b3d] border-[#4d3f72] text-[#7f739e] shadow-[0_6px_0_#130f26] cursor-not-allowed opacity-75';
+        }
+        btn.className = btnClasses;
+
+        btn.innerHTML = `
+          <span class="text-2xl sm:text-3xl leading-none">${unlocked ? phase.icon : '🔒'}</span>
+          <span class="font-mono-tech text-[10px] font-extrabold mt-1">${completed ? '✓ 2/2' : `${doneInPhase}/2`}</span>
+        `;
+
+        if (unlocked) {
+          btn.addEventListener('click', () => enterPhase(idx));
+        }
+
+        // Phase Label Card under Node
+        const card = document.createElement('div');
+        card.className = `mt-2.5 text-center px-4 py-2 rounded-xl border ${
+          isCurrent
+            ? 'bg-[#261f4a] border-[#68f9e6] shadow-lg'
+            : completed
+              ? 'bg-[#1b1636] border-[#c0ff79]/50'
+              : 'bg-[#1b1636]/70 border-[#4d3f72]/60'
+        }`;
+
+        card.innerHTML = `
+          <div class="font-mono-tech text-[10px] font-bold uppercase tracking-wider ${
+            completed ? 'text-[#c0ff79]' : isCurrent ? 'text-[#68f9e6]' : 'text-[#8c7fb0]'
+          }">
+            FASE ${idx + 1} ${isCurrent ? '• JOGAR AGORA' : completed ? '• CONCLUÍDA' : '• BLOQUEADA'}
+          </div>
+          <div class="text-sm sm:text-base font-extrabold text-white">${phase.name}</div>
+          <div class="text-[11px] text-[#c8bfdc] max-w-[210px]">${phase.subtitle}</div>
+        `;
+
+        wrapper.appendChild(btn);
+        wrapper.appendChild(card);
+        container.appendChild(wrapper);
+      });
+    }
+
+    function enterPhase(phaseIdx) {
+      state.currentPhaseIndex = phaseIdx;
+      const phase = PHASES[phaseIdx];
+      document.getElementById('stage-badge').textContent = `FASE ${phaseIdx + 1} DE 6 • ${phase.icon}`;
+      document.getElementById('stage-title').textContent = phase.name;
+      showScreen('screen-play');
+      game.loadStage(phaseIdx);
+    }
+
+    /* =========================================================================
+       8. CHEST QUIZ MODAL LOGIC
+    ========================================================================= */
+    let onModalClosedCallback = null;
+
+    function openQuizModal(qIdx, onDone) {
+      state.activeQuestionIndex = qIdx;
+      state.selectedOption = null;
+      onModalClosedCallback = onDone;
+
+      const q = QUESTIONS[qIdx];
+      const phase = PHASES[q[0]];
+
+      document.getElementById('modal-phase-badge').textContent = `FASE ${q[0] + 1} (${phase.name}) • DESAFIO ${qIdx + 1} DE 12`;
+      document.getElementById('modal-question').textContent = q[1];
+
+      const optionsBox = document.getElementById('modal-options');
+      optionsBox.innerHTML = '';
+
+      q[2].forEach((optText, optIdx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'w-full text-left p-3.5 sm:p-4 rounded-xl bg-[#100d25] border-2 border-[#4d3f72] hover:border-[#68f9e6] text-sm sm:text-base font-medium text-white transition flex items-start gap-3 cursor-pointer';
+        btn.innerHTML = `
+          <span class="font-mono-tech font-extrabold text-xs px-2 py-1 rounded bg-[#261f4a] text-[#68f9e6] shrink-0 mt-0.5">
+            ${'ABCD'[optIdx]}
+          </span>
+          <span>${optText}</span>
+        `;
+
+        btn.addEventListener('click', () => {
+          if (state.answers[qIdx] !== undefined) return; // Already confirmed
+          state.selectedOption = optIdx;
+          [...optionsBox.children].forEach((child, j) => {
+            const active = j === optIdx;
+            child.classList.toggle('border-[#68f9e6]', active);
+            child.classList.toggle('bg-[#68f9e6]/15', active);
+            child.classList.toggle('border-[#4d3f72]', !active);
+          });
+          document.getElementById('modal-btn-confirm').disabled = false;
+        });
+
+        optionsBox.appendChild(btn);
+      });
+
+      const fb = document.getElementById('modal-feedback');
+      fb.classList.add('hidden');
+      fb.innerHTML = '';
+
+      const confirmBtn = document.getElementById('modal-btn-confirm');
+      const continueBtn = document.getElementById('modal-btn-continue');
+      confirmBtn.classList.remove('hidden');
+      confirmBtn.disabled = true;
+      continueBtn.classList.add('hidden');
+
+      document.getElementById('quiz-modal').classList.remove('hidden');
+    }
+
+    document.getElementById('modal-btn-confirm').addEventListener('click', () => {
+      const qIdx = state.activeQuestionIndex;
+      if (qIdx === null || state.selectedOption === null || state.answers[qIdx] !== undefined) return;
+
+      const q = QUESTIONS[qIdx];
+      const chosen = state.selectedOption;
+      const isCorrect = chosen === q[3];
+      state.answers[qIdx] = chosen;
+
+      if (isCorrect) {
+        sfx.correct();
+      } else {
+        sfx.wrong();
+        if (state.hearts > 1) {
+          state.hearts -= 1;
+        }
+      }
+      updateGlobalHUD();
+
+      // Highlight options
+      const optionsBox = document.getElementById('modal-options');
+      [...optionsBox.children].forEach((btn, idx) => {
+        btn.disabled = true;
+        btn.classList.remove('hover:border-[#68f9e6]', 'border-[#68f9e6]', 'bg-[#68f9e6]/15');
+        if (idx === q[3]) {
+          btn.classList.add('border-[#c0ff79]', 'bg-[#c0ff79]/15');
+        } else if (idx === chosen && !isCorrect) {
+          btn.classList.add('border-[#ff87ce]', 'bg-[#ff87ce]/15');
+        } else {
+          btn.classList.add('border-[#4d3f72]', 'opacity-65');
+        }
+      });
+
+      // Show pedagogical feedback
+      const fb = document.getElementById('modal-feedback');
+      fb.className = `rounded-xl p-4 mb-5 border-l-4 ${
+        isCorrect
+          ? 'bg-[#c0ff79]/10 border-[#c0ff79]'
+          : 'bg-[#ff87ce]/10 border-[#ff87ce]'
+      }`;
+
+      fb.innerHTML = `
+        <div class="font-extrabold text-sm sm:text-base ${isCorrect ? 'text-[#c0ff79]' : 'text-[#ff87ce]'} mb-1">
+          ${isCorrect ? '✓ Acertou! +100 XP conquistados!' : 'Vamos aprender com essa! +0 XP (e -1 ❤️)'}
+        </div>
+        ${!isCorrect ? `<div class="text-xs sm:text-sm font-bold text-white mb-1.5">Resposta correta: ${q[2][q[3]]}</div>` : ''}
+        <p class="text-xs sm:text-sm text-[#e4dcf5] leading-relaxed">${q[4]}</p>
+      `;
+      fb.classList.remove('hidden');
+
+      document.getElementById('modal-btn-confirm').classList.add('hidden');
+      const continueBtn = document.getElementById('modal-btn-continue');
+      continueBtn.classList.remove('hidden');
+      continueBtn.focus();
+    });
+
+    document.getElementById('modal-btn-continue').addEventListener('click', () => {
+      document.getElementById('quiz-modal').classList.add('hidden');
+      if (typeof onModalClosedCallback === 'function') {
+        const cb = onModalClosedCallback;
+        onModalClosedCallback = null;
+        cb();
+      }
+    });
+
+    /* =========================================================================
+       9. FINAL RESULT & PRINTABLE REPORT GENERATION
+    ========================================================================= */
+    function showFinalResult() {
+      const totalXP = getQuizXP();
+      const hits = totalXP / 100;
+      const pct = Math.round((hits / 12) * 100);
+
+      document.getElementById('result-student').textContent = `Aluno(a): ${state.studentName}`;
+      document.getElementById('result-date').textContent = `Concluído em ${new Date().toLocaleString('pt-BR')} • Aula 13 — Mecânicas e Regras`;
+      document.getElementById('result-score').textContent = `${hits} / 12`;
+      document.getElementById('result-xp').textContent = totalXP.toLocaleString('pt-BR');
+      document.getElementById('result-percent').textContent = `${pct}%`;
+
+      document.getElementById('result-message').textContent =
+        hits === 12
+          ? 'Domínio completo! Aplique essas decisões ao jogo da equipe.'
+          : hits >= 8
+            ? 'Boa missão! Revise as explicações e leve esse aprendizado para o projeto.'
+            : 'Missão concluída. Use a revisão para fortalecer os conceitos e tente novamente quando quiser.';
+
+      const reviewList = document.getElementById('result-review-list');
+      reviewList.innerHTML = '';
+
+      QUESTIONS.forEach((q, idx) => {
+        const userAnsIdx = state.answers[idx];
+        const isOk = userAnsIdx === q[3];
+        const userAnsText = userAnsIdx !== undefined ? q[2][userAnsIdx] : 'Não respondida';
+
+        const article = document.createElement('article');
+        article.className = 'review-item py-4';
+        article.innerHTML = `
+          <div class="font-mono-tech text-xs font-bold ${isOk ? 'text-[#c0ff79]' : 'text-[#ff87ce]'} print-text-dark mb-1">
+            ${isOk ? '✓ Acerto • 100 XP' : '✕ Para revisar • 0 XP'} — Fase ${q[0] + 1}: ${PHASES[q[0]].name}
+          </div>
+          <h3 class="text-base sm:text-lg font-extrabold text-white print-text-dark mb-1.5">
+            ${idx + 1}. ${q[1]}
+          </h3>
+          <p class="text-xs sm:text-sm text-[#e4dcf5] print-text-dark mb-1">
+            <strong>Sua resposta:</strong> ${userAnsText}
+          </p>
+          <p class="text-xs sm:text-sm text-[#c0ff79] print-text-dark mb-1.5">
+            <strong>Resposta correta:</strong> ${q[2][q[3]]}
+          </p>
+          <p class="text-xs sm:text-sm text-[#a599c2] print-text-dark leading-relaxed">
+            ${q[4]}
+          </p>
+        `;
+        reviewList.appendChild(article);
+      });
+
+      showScreen('screen-result');
+      document.getElementById('result-title').focus();
+    }
+
+    /* =========================================================================
+       10. EVENT LISTENERS & INITIALIZATION
+    ========================================================================= */
+    document.getElementById('form-start').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const input = document.getElementById('input-student');
+      const err = document.getElementById('start-error');
+      const val = input.value.trim();
+
+      if (!val) {
+        err.classList.remove('hidden');
+        input.focus();
+        return;
+      }
+
+      err.classList.add('hidden');
+      state.studentName = val;
+      sfx.init();
+      sfx.coin();
+
+      document.getElementById('hud-stats').classList.remove('hidden');
+      document.getElementById('hud-stats').classList.add('flex');
+      updateGlobalHUD();
+      renderTrail();
+      showScreen('screen-trail');
+    });
+
+    document.getElementById('btn-sound').addEventListener('click', (e) => {
+      sfx.muted = !sfx.muted;
+      e.currentTarget.textContent = sfx.muted ? '🔇' : '🔊';
+    });
+
+    document.getElementById('btn-back-trail').addEventListener('click', () => {
+      renderTrail();
+      showScreen('screen-trail');
+    });
+
+    document.getElementById('btn-next-phase-trail').addEventListener('click', () => {
+      if (getAnsweredCount() === 12) {
+        showFinalResult();
+      } else {
+        renderTrail();
+        showScreen('screen-trail');
+      }
+    });
+
+    document.getElementById('btn-finish-early').addEventListener('click', () => {
+      showFinalResult();
+    });
+
+    document.getElementById('btn-back-to-trail-from-result').addEventListener('click', () => {
+      renderTrail();
+      showScreen('screen-trail');
+    });
+
+    document.getElementById('btn-print').addEventListener('click', () => {
+      window.print();
+    });
+
+    // Custom Restart Confirmation Modal
+    document.getElementById('btn-restart').addEventListener('click', () => {
+      document.getElementById('confirm-modal').classList.remove('hidden');
+    });
+
+    document.getElementById('confirm-cancel').addEventListener('click', () => {
+      document.getElementById('confirm-modal').classList.add('hidden');
+    });
+
+    document.getElementById('confirm-ok').addEventListener('click', () => {
+      document.getElementById('confirm-modal').classList.add('hidden');
+      state.studentName = '';
+      state.hearts = state.maxHearts;
+      state.bonusCoinXP = 0;
+      state.answers = new Array(12).fill(undefined);
+      state.currentPhaseIndex = 0;
+      state.activeQuestionIndex = null;
+      state.selectedOption = null;
+
+      document.getElementById('hud-stats').classList.add('hidden');
+      document.getElementById('hud-stats').classList.remove('flex');
+      document.getElementById('input-student').value = '';
+      showScreen('screen-intro');
+      startIntroPreview();
+    });
+
+    window.addEventListener('load', () => {
+      startIntroPreview();
+    });
+  </script>
+</body>
+</html>
